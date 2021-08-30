@@ -71,7 +71,7 @@ The dataset we will be working with contains the number of daily bike rentals in
 The first step is to import the data into R. We will use either `readr::read_csv()` or `vroom::vroom()`-- I prefer the latter as it is a lot faster. Once you import any datafile, make sure the first thing you do is  use `janitor::clean_names()`
 
 ```{r bike-weather, echo = TRUE}
-bike_weather <- vroom(here::here("data","bike_weather.csv")) %>% 
+bike_weather <- vroom(here::here("data","london_bikes.csv")) %>% 
   janitor::clean_names() %>% 
   mutate(month = lubridate::month(day, label = TRUE),
          weekday = lubridate::wday(day, label=TRUE)
