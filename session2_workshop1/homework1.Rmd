@@ -41,6 +41,7 @@ library(skimr)
 library(janitor)
 library(vroom)
 library(tidyquant)
+library(rvest) # to scrape wikipedia page
 ```
 
 
@@ -350,17 +351,17 @@ Some hints to get you started:
  
 
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, cache=TRUE}
 
 # Download CDC vaccination by county
 cdc_url <- "https://data.cdc.gov/api/views/8xkx-amqh/rows.csv?accessType=DOWNLOAD"
 vaccinations <- vroom(cdc_url) %>% 
   janitor::clean_names() %>% 
-  filter(fips != "UNK") # remove counties hat have an unknown (UNK) FIPS code
+  filter(fips != "UNK") # remove counties that have an unknown (UNK) FIPS code
 
 # Download County Presidential Election Returns
 # https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/VOQCHQ
-election2020_results <- vroom("data/countypres_2000-2020.csv") %>% 
+election2020_results <- vroom(here::here("data", "countypres_2000-2020.csv")) %>% 
   janitor::clean_names() %>% 
   
   # just keep the results for the 2020 election
@@ -387,29 +388,50 @@ population <- vroom(population_url) %>%
 ```
 
 
-# Challenge 2: 2016 California Contributors plots
+# Challenge 2: Opinion polls for the 2021 German elections
 
-As discussed in class, I would like you to reproduce the plot that shows the top ten cities in highest amounts raised in political contributions in California during the 2016 US Presidential election.
-
-
-
-```{r challenge2, echo=FALSE, out.width="100%"}
-knitr::include_graphics(here::here("images", "challenge2.png"), error = FALSE)
-```
+The Guardian newspaper has an [election poll tracker for the upcoming German election](https://www.theguardian.com/world/2021/aug/20/german-election-poll-tracker-who-will-be-the-next-chancellor).
+The list of the opinion polls since Jan 2021 can be found at [Wikipedia](https://en.wikipedia.org/wiki/Opinion_polling_for_the_2021_German_federal_election) and your task is to reproduce the graph similar to the one produced by the Guardian. 
 
 
-To get this plot, you must join two dataframes; the one you have with all contributions, and data that can translate zipcodes to cities.
-You can find a file with all US zipcodes, e.g., here http://www.uszipcodelist.com/download.html. 
-
-The easiest way would be to create two plots and then place one next to each other. For this, you will need the `patchwork` package.
-https://cran.r-project.org/web/packages/patchwork/index.html
-
-While this is ok, what if one asked you to create the same plot for the top 10 candidates and not just the top two? The most challenging part is how to reorder within categories, and for this you will find Julia Silge's post on [REORDERING AND FACETTING FOR GGPLOT2](https://juliasilge.com/blog/reorder-within/) useful.
+The following code will scrape the wikipedia page and import the table in a dataframe.
 
 
-```{r, load_CA_data, warnings= FALSE, message=FALSE}
-# Make sure you use vroom() as it is significantly faster than read.csv()
-CA_contributors_2016 <- vroom::vroom(here::here("data","CA_contributors_2016.csv"))
+```{r, scrape_wikipedia_polling_data, warnings= FALSE, message=FALSE}
+url <- "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2021_German_federal_election"
+# https://www.economist.com/graphic-detail/who-will-succeed-angela-merkel
+# https://www.theguardian.com/world/2021/jun/21/german-election-poll-tracker-who-will-be-the-next-chancellor
+
+
+# get tables that exist on wikipedia page 
+tables <- url %>% 
+  read_html() %>% 
+  html_nodes(css="table")
+
+
+# parse HTML tables into a dataframe called polls 
+# Use purr::map() to create a list of all tables in URL
+polls <- map(tables, . %>% 
+             html_table(fill=TRUE)%>% 
+             janitor::clean_names())
+
+
+# list of opinion polls
+german_election_polls <- polls[[1]] %>% # the first table on the page contains the list of all opinions polls
+  slice(2:(n()-1)) %>%  # drop the first row, as it contains again the variable names and last row that contains 2017 results
+  mutate(
+         # polls are shown to run from-to, e.g. 9-13 Aug 2021. We keep the last date, 13 Aug here, as the poll date
+         # and we extract it by picking the last 11 characters from that field
+         end_date = str_sub(fieldwork_date, -11),
+         
+         # end_date is still a string, so we convert it into a date object using lubridate::dmy()
+         end_date = dmy(end_date),
+         
+         # we also get the month and week number from the date, if we want to do analysis by month- week, etc.
+         month = month(end_date),
+         week = isoweek(end_date)
+         )
+
 
 
 ```
