@@ -341,7 +341,7 @@ knitr::include_graphics(here::here("images", "vaxxes_by_state_red_blue_every_cou
 ```
 
 
-You dont have to worry about the blue-red backgouns and don't worry about replicating it exactly, try and see how far you can get. You're encouraged to work together if you want to and exchange tips/tricks you figured out-- and even though the figure in the original article is from early July 2021, you can use the most recent data.
+You dont have to worry about the blue-red backgound and don't worry about replicating it exactly, try and see how far you can get. You're encouraged to work together if you want to and exchange tips/tricks you figured out-- and even though the figure in the original article is from early July 2021, you can use the most recent data.
 
 Some hints to get you started:
 

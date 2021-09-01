@@ -3,6 +3,8 @@ library(tidyverse)
 library(lubridate)
 library(janitor)
 library(here)
+library(vroom)
+library(skimr)
 
 
 # Hex color codes for Democrat Blue and Republican Red
@@ -12,7 +14,14 @@ party_colors <- c("#2E74C0", "#CB454A")
 # Make sure you use readr::read_csv() as it is significantly faster than read.csv()
 CA_contributors_2016 <- read_csv(here::here("data", "CA_contributors_2016.csv"))
 
+# .. or if you want real speed, go for vroom::vroom()
+CA_contributors_2016 <- vroom(here::here("data", "CA_contributors_2016.csv"))
+
 glimpse(CA_contributors_2016)
+
+CA_contributors_2016 %>% 
+  select(contb_receipt_amt) %>% 
+  skim()
 
 # Highest Individual Contribution -----------------------------------------
 CA_contributors_2016 %>% 
