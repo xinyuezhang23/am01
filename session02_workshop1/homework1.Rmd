@@ -381,10 +381,6 @@ population <- vroom(population_url) %>%
   # pad FIPS codes with leading zeros, so they are always made up of 5 characters
   mutate(fips = stringi::stri_pad_left(fips, width=5, pad = "0"))
 
-
-         
-
-
 ```
 
 
@@ -431,9 +427,6 @@ german_election_polls <- polls[[1]] %>% # the first table on the page contains t
          month = month(end_date),
          week = isoweek(end_date)
          )
-
-
-
 ```
 
 
