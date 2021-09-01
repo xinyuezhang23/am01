@@ -2,6 +2,7 @@ library(tidyverse)
 library(mosaic)
 library(here)
 library(lubridate)
+library(skimr)
 
 
 #read the CSV file
