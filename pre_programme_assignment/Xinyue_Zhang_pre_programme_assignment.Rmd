@@ -1,7 +1,7 @@
 ---
 title: 'MAM 2022 Pre-programme Assignment'
-author: "YOUR NAME HERE"
-date: "DATE HERE"
+author: "Xinyue Zhang"
+date: "8/21/2021"
 output:
   html_document:
     theme: flatly
@@ -19,51 +19,22 @@ library(janitor)
 
 The goal is to test your software installation, to demonstrate competency in Markdown, and in the basics of `ggplot`.
 
-# R and RStudio installation
-
-You should successfully install R and R studio in your computer. We will do all of our work in this class with the open source (and free!) programming language [R](https://cran.r-project.org/). However, we will use [RStudio](https://www.rstudio.com/) as the main program to access R.
-
-You can find details on how to [install both R and R studio here](https://mam2022.netlify.app/reference/01-reference/)
-
-## Install `tidyverse`, `gapminder` and `here` packages
-
-A clean installation of R is known as **base R**. We need to install a couple of packages, namely `tidyverse`, `gapminder`, and `here`. Go to the packages panel in the bottom right of RStudio, click on "Install," type `tidyverse`, and press enter. You'll see a bunch of output in the RStudio console as all the packages are installed and, depending on the speed of your computer, this may take a while. Once installation of tidyverse finishes, install `gapminder` and `here`.
-
-You can also just paste and run these commands
-
--   `install.packages("tidyverse")`
--   `install.packages("gapminder")`
--   `install.packages("here")`
-
-in the `console` (bottom left in RStudio) instead of using the packages panel.
-
-You can find details on [installing the tidyverse here](https://mam2022.netlify.app/reference/02-reference)
-
-## Practice using Markdown
-
-Written assignments will be submitted using [Markdown](https://daringfireball.net/projects/markdown/). Markdown is a lightweight text formatting language that easily converts between file formats. It is integrated directly into [R Markdown](http://rmarkdown.rstudio.com/), which combines R code, output, and written text into a single document (`.Rmd`).
-
-There is a very nice [Markdwown tutorial](https://commonmark.org/help/tutorial/) that I suggest you go through before working on your assignment. If you want to use a stand-alone Markdown editor [Typora](https://typora.io/) is a lightweight Markdown editor that inherently supports pandoc-flavored Markdown.
-
-## Pandoc
-
-[Pandoc](http://pandoc.org)is a program that converts Markdown files into basically anything else. It was created by [John MacFarlane](https://johnmacfarlane.net), a philosophy professor at the University of California, Berkeley and is widely used as a writing tool and as a basis for publishing workflow. Kieran Healy's [Plain Text Social Science workflow](http://plain-text.co) describes how to use Markdown and then convert your Markdown document to HTML, PDF, word, etc.
-
-You should create a file whose name will be `your_name.Rmd`, so if I were submitting, my file would be called `Kostis_Christodoulou.Rmd`
-
-# Task 1: Short biography written using markdown
-
-You should write within this Rmd file a brief biography of yourself using markdown syntax. I know you have already achieved a lot, but a couple of paragraphs is more than enough.
-
-To achieve full marks, you should include at least 4 of the following elements:
-
--   Headers
--   Emphasis (italics or bold)
--   Lists
--   Links
--   Embedding images
-
 > Please delete all the intro text I wrote from line 22 to line 69 and start writing your short biography after this blockquote.
+
+## A brief biography
+Hi, my name is **Xinyue Zhang** and I am from **China**.   
+
+Here are some key points about me.  
+
+1. Undergraduate school: Shanghai University of Finance and Economics
+2. Hometown: Changchun, Jilin Province
+3. Birthday: March 7,1999
+
+As for work experience, please refer to my [LinkedIn Profile](https://www.linkedin.com/in/xinyue-zhang-9942aa155/).
+
+![Here is my photo](photo.jpg)
+
+
 
 # Task 2: `gapminder` country comparison
 
@@ -85,56 +56,57 @@ country_data <- gapminder %>%
             filter(country == "Greece") # just choosing Greece, as this is where I come from
 
 continent_data <- gapminder %>% 
-            filter(continent == "Europe")
+            filter(continent == "Asia")
 ```
 
 First, create a plot of life expectancy over time for the single country you chose. Map `year` on the x-axis, and `lifeExp` on the y-axis. You should also use `geom_point()` to see the actual data points and `geom_smooth(se = FALSE)` to plot the underlying trendlines. You need to remove the comments **\#** from the lines below for your code to run.
 
 ```{r, lifeExp_one_country}
-# plot1 <- ggplot(data = ??, mapping = aes(x = ??, y = ??))+
-#   geom_??() +
-#   geom_smooth(se = FALSE)+
-#   NULL 
-
-# plot1
+plot1 <- ggplot(data = country_data, mapping = aes(x = year , y = lifeExp))+
+   geom_point() +
+  geom_smooth(se = FALSE)+
+  NULL 
+plot1
 ```
 
 Next we need to add a title. Create a new plot, or extend plot1, using the `labs()` function to add an informative title to the plot.
 
 ```{r, lifeExp_one_country_with_label}
-# plot1<- plot1 +
-#   labs(title = " ",
-#       x = " ",
-#       y = " ") +
-#   NULL
+ plot1<- plot1 +
+   labs(title = " Life expectancy of Greece ",
+       x = " Year ",
+       y = " Life expectancy in years") +
+   NULL
 
 
-# plot1
+ plot1
 ```
 
 Secondly, produce a plot for all countries in the *continent* you come from. (Hint: map the `country` variable to the colour aesthetic. You also want to map `country` to the `group` aesthetic, so all points for each country are grouped together).
 
 ```{r lifeExp_one_continent}
-# ggplot(gapminder, mapping = aes(x =  , y =  , colour= , group =))+
-#   geom_?? + 
-#   geom_smooth(se = FALSE) +
-#   NULL
+ ggplot(continent_data, mapping = aes(x = year , y = lifeExp , colour= country , group = country))+
+   geom_point() + 
+   geom_smooth(se = FALSE) +
+   NULL
 ```
 
 Finally, using the original `gapminder` data, produce a life expectancy over time graph, grouped (or faceted) by continent. We will remove all legends, adding the `theme(legend.position="none")` in the end of our ggplot.
 
 ```{r lifeExp_facet_by_continent}
-# ggplot(data = gapminder , mapping = aes(x =  , y =  , colour= ))+
-#   geom_??? + 
-#   geom_smooth(se = FALSE) +
-#   facet_wrap(~continent) +
-#   theme(legend.position="none") + #remove all legends
-#   NULL
+ ggplot(data = gapminder , mapping = aes(x = year , y = lifeExp  , colour= country))+
+   geom_point() + 
+   geom_smooth(se = FALSE) +
+   facet_wrap(~continent) +
+   theme(legend.position="none") + #remove all legends
+   NULL
 ```
 
 Given these trends, what can you say about life expectancy since 1952? Again, don't just say what's happening in the graph. Tell some sort of story and speculate about the differences in the patterns.
 
 > Type your answer after this blockquote.
+
+Since 1952, life expectancy has increased all over the world. However,after 1985, life expectancy in several African countries sharply decreased. This could be caused by wrong record of data or sever war.Developed countries in Europe and Oceania had a higher life expectancy in 1952 and steadily grows to around 80 during this period. And there is still one country in Asia that has a life expectancy for only 40.
 
 # Task 3: Brexit vote analysis
 
@@ -157,18 +129,30 @@ To get a sense of the spread, or distribution, of the data, we can plot a histog
 
 # histogram
 ggplot(brexit_results, aes(x = leave_share)) +
-  geom_histogram(binwidth = 2.5)
+  geom_histogram(binwidth = 2.5)+
+  labs(x='Percent of votes cast in favour of Brexit (%)',
+       title='Histogram'
+       )+
+  NULL
 
 # density plot-- think smoothed histogram
 ggplot(brexit_results, aes(x = leave_share)) +
-  geom_density()
+  geom_density()+
+  labs(x='Percent of votes cast in favour of Brexit (%)',
+       title='Density Plot'
+       )+
+  NULL
 
 
 # The empirical cumulative distribution function (ECDF) 
 ggplot(brexit_results, aes(x = leave_share)) +
   stat_ecdf(geom = "step", pad = FALSE) +
-  scale_y_continuous(labels = scales::percent)
-  
+  scale_y_continuous(labels = scales::percent)+
+  labs(x='Percent of votes cast in favour of Brexit (%)',
+       y='Cumulative percent',
+       title='Cumulative distribution '
+       )+
+  NULL
 
 
 ```
@@ -194,6 +178,10 @@ ggplot(brexit_results, aes(x = born_in_uk, y = leave_share)) +
   
   # use a white background and frame the plot with a black box
   theme_bw() +
+  labs(x='Proportion of native born residents (%)',
+       y=' Rercent of votes cast in favour of Brexit (%)',
+       title='Relationship between the UK born residents and Berxit',
+       subtitle='UK born residents tend to vote for Brexit')+
   NULL
 ```
 
@@ -202,6 +190,8 @@ You have the code for the plots, I would like you to revisit all of them and use
 What can you say about the relationship shown above? Again, don't just say what's happening in the graph. Tell some sort of story and speculate about the differences in the patterns.
 
 > Type your answer after, and outside, this blockquote.
+
+Residents born in UK tend to vote for Brexit since they were fear of immigration and opposition to the EU's more open border policy.They tend to believe that continous immigrants will bring continous labour and it will be harder for UK residents to find a job.
 
 # Task 4: Animal rescue incidents attended by the London Fire Brigade
 
@@ -263,6 +253,8 @@ animal_rescue %>%
 
 Do you see anything strange in these tables? 
 
+- There are two 'cat' in animal group.
+
 Finally, let us have a loot at the notional cost for rescuing each of these animals. As the LFB says,
 
 > Please note that any cost included is a notional cost calculated based on the length of time rounded up to the nearest hour spent by Pump, Aerial and FRU appliances at the incident and charged at the current Brigade hourly rate.
@@ -299,7 +291,7 @@ Now that incident_notional_cost is numeric, let us quickly calculate summary sta
 animal_rescue %>% 
   
   # group by animal_group_parent
-  group_by(???) %>% 
+  group_by(animal_group_parent) %>% 
   
   # filter resulting data, so each group has at least 6 observations
   filter(n()>6) %>% 
@@ -314,14 +306,13 @@ animal_rescue %>%
             count = n()) %>% 
   
   # sort the resulting data in descending order. You choose whether to sort by count or mean cost.
-  arrange(????)
+  arrange(desc(mean_incident_cost))
 
 ```
 
-
-
-Compare the mean and the median for each animal group. waht do you think this is telling us?
+Compare the mean and the median for each animal group. what do you think this is telling us?
 Anything else that stands out? Any outliers?
+- Horse and Cow are especially expensive to rescue in incidents and people should have an expectation about this.One outliers in horse incident cost 3480.
 
 Finally, let us plot a few plots that show the distribution of incident_cost for each animal group.
 
@@ -347,6 +338,8 @@ base_plot + stat_ecdf(geom = "step", pad = FALSE) +
 
 Which of these four graphs do you think best communicates the variability of the `incident_notional_cost` values? Also, can you please tell some sort of story (which animals are more expensive to rescue than others, the spread of values) and speculate about the differences in the patterns.
 
+- The boxplot best communicates the variability of the `incident_notional_cost` values.  
+Horses are more expensive to rescue than others and have many outliers. When watching Rick and Morty I realize there is a job called horse surgeon. I assume that other animals are rescued by normal vets and horse is different. Therefore the cost is higher.
 
 # Submit the assignment
 
@@ -356,6 +349,6 @@ Knit the completed R Markdown file as an HTML document (use the "Knit" button at
 
 If you want to, please answer the following
 
--   Who did you collaborate with: TYPE NAMES HERE
--   Approximately how much time did you spend on this problem set: ANSWER HERE
--   What, if anything, gave you the most trouble: ANSWER HERE
+-   Who did you collaborate with: Myself
+-   Approximately how much time did you spend on this problem set: 6 hours
+-   What, if anything, gave you the most trouble: Memorizing the ggplot functions are difficult. 

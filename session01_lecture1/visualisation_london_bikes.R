@@ -37,7 +37,7 @@ skim(bike)
 # Time series plot of bikes rented
 ggplot(bike, aes(x=day, y=bikes_hired))+
   geom_smooth()+
-  geom_point(alpha = 0.4)+
+  geom_point(alpha = 0.5)+
   theme_bw()+
   NULL
 
@@ -112,7 +112,8 @@ ggplot(bike, aes(x=bikes_hired))+
 
 #Boxplot of bikes_hired  by month
 # since 'month' is a number, it treats it as a continuous variable; hence we get just one box
-ggplot(bike, aes(x=month, y= bikes_hired))+
+#month is numerical, but x should be factor here
+ggplot(bike, aes(x=month, y= bikes_hired))+ # can change x=factor(month)
   geom_boxplot()+
   theme_bw()+
   NULL
@@ -170,7 +171,7 @@ ggplot(bike, aes(x=temp, y= bikes_hired))+
   NULL
 
 ggplot(bike, aes(x=rh, y= bikes_hired))+
-  geom_point()+
+  geom_point(alpha=0.5)+
   geom_smooth(method = "lm")+
   theme_bw()+
   NULL

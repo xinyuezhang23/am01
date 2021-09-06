@@ -1,0 +1,173 @@
+---
+title: "Challenge 2"
+output: html_document
+---
+
+``````{r, setup, echo=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+options(digits = 3)
+
+# default figure size
+knitr::opts_chunk$set(
+  fig.width=6.75, 
+  fig.height=6.75,
+  fig.align = "center"
+)
+```
+
+
+```{r}
+library(tidyverse)  # Load ggplot2, dplyr, and all the other tidyverse packages
+library(mosaic)
+library(ggthemes)
+library(lubridate)
+library(fivethirtyeight)
+library(here)
+library(skimr)
+library(janitor)
+library(vroom)
+library(tidyquant)
+library(rvest) # to scrape wikipedia page
+```
+
+
+```{r}
+url <- "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2021_German_federal_election"
+# https://www.economist.com/graphic-detail/who-will-succeed-angela-merkel
+# https://www.theguardian.com/world/2021/jun/21/german-election-poll-tracker-who-will-be-the-next-chancellor
+
+
+# get tables that exist on wikipedia page 
+tables <- url %>% 
+  read_html() %>% 
+  html_nodes(css="table")
+
+
+# parse HTML tables into a dataframe called polls 
+# Use purr::map() to create a list of all tables in URL
+polls <- map(tables, . %>% 
+             html_table(fill=TRUE)%>% 
+             janitor::clean_names())
+
+
+# list of opinion polls
+german_election_polls <- polls[[1]] %>% # the first table on the page contains the list of all opinions polls
+  slice(2:(n()-1)) %>%  # drop the first row, as it contains again the variable names and last row that contains 2017 results
+  mutate(
+         # polls are shown to run from-to, e.g. 9-13 Aug 2021. We keep the last date, 13 Aug here, as the poll date
+         # and we extract it by picking the last 11 characters from that field
+         end_date = str_sub(fieldwork_date, -11),
+         
+         # end_date is still a string, so we convert it into a date object using lubridate::dmy()
+         end_date = dmy(end_date),
+         
+         # we also get the month and week number from the date, if we want to do analysis by month- week, etc.
+         month = month(end_date),
+         week = isoweek(end_date)
+         )
+```
+
+
+```{r}
+nrow(german_election_polls)
+
+#Removing duplicate values
+german_election_polls <- german_election_polls[!duplicated(german_election_polls), ]
+
+nrow(german_election_polls)
+```
+
+
+```{r}
+#Setting colors for different political parties
+col_union = "Black"
+col_spd = "red3"
+col_afd = "blue3"
+col_fdp = "Orange"
+col_linke = "purple3"
+col_grune = "green3"
+
+colors <- c("Sepal Width" = "blue", "Petal Length" = "red", "Petal Width" = "orange")
+```
+
+
+```{r}
+#Calculating rolling average for different political parties
+
+german_election_polls_avg <- german_election_polls %>% 
+  mutate(
+    union_avg = rollmean(union, 14, align="left", fill = NA),
+    spd_avg = rollmean(spd, 14, align="left", fill = NA),
+    afd_avg = rollmean(af_d, 14, align="left", fill = NA),
+    fdp_avg = rollmean(fdp, 14, align="left", fill = NA),
+    linke_avg = rollmean(linke, 14, align="left", fill = NA),
+    grune_avg = rollmean(grune, 14, align="left", fill = NA)
+    )
+```
+
+
+
+```{r}
+#Plotting the graph
+
+german_election_polls_avg %>% 
+  ggplot +
+  
+  #Union
+  geom_point(aes(x=end_date,y=union),color=col_union, alpha=0.5)+
+  geom_line(aes(x=end_date,y=union_avg),
+            se=FALSE,color=col_union,size=1.1, alpha=0.6)+
+  #spd
+  geom_point(aes(x=end_date,y=spd),color=col_spd, alpha=0.5)+
+  geom_line(aes(x=end_date,y=spd_avg),
+            se=FALSE,color=col_spd,size=1.1, alpha=0.6)+
+  #af_d
+  geom_point(aes(x=end_date,y=af_d),color=col_afd, alpha=0.5)+
+  geom_line(aes(x=end_date,y=afd_avg),
+            se=FALSE,color=col_afd,size=1.1, alpha=0.6)+
+  #fdp
+  geom_point(aes(x=end_date,y=fdp),color=col_fdp, alpha=0.5)+
+  geom_line(aes(x=end_date,y=fdp_avg),
+            se=FALSE,color=col_fdp,size=1.1, alpha=0.6)+
+  #linke
+  geom_point(aes(x=end_date,y=linke),color=col_linke, alpha=0.5)+
+  geom_line(aes(x=end_date,y=linke_avg),
+            se=FALSE,color=col_linke,size=1.1, alpha=0.6)+
+  #grune
+  geom_point(aes(x=end_date,y=grune),color=col_grune, alpha=0.5)+
+  geom_line(aes(x=end_date,y=grune_avg),
+            se=FALSE,color=col_grune,size=1.1, alpha=0.6)+
+  
+  #Setting x and y axes labels to be null
+  labs(x="", y="") +
+  
+  #Date labels for x-axis
+  scale_x_date(date_minor_breaks = "1 months", 
+               date_labels = "%b %Y") +
+  
+  #Percentage labels for y-axis
+  scale_y_continuous(breaks = c(5, 15, 25, 35, 45),
+                     labels = function(x) paste0(x, "%")) +
+  
+  #Setting black and white theme, and removing grid lines
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  
+  #Plotting horizontal lines 
+  geom_hline(aes(yintercept = 5), linetype="dashed", alpha=0.2) +
+  geom_hline(aes(yintercept = 15), linetype="dashed", alpha=0.2) +
+  geom_hline(aes(yintercept = 25), linetype="dashed", alpha=0.2) +
+  geom_hline(aes(yintercept = 35), linetype="dashed", alpha=0.2)+
+  
+  #Annotate
+  scale_color_manual(values = colors)
+
+```
+
+
+
+

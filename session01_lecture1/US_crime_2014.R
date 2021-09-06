@@ -8,7 +8,7 @@ library(ggrepel)
 
 us_crime <- read_csv(here::here("Data", "CrimeOneYearofData.csv")) %>% 
   filter(State != "District of Columbia") %>% 
-  clean_names() %>% 
+  clean_names() %>%  # change space into _, A into a
   mutate(state = str_to_lower(state))
 
 favstats(~violent_crime_total, data=us_crime)
@@ -22,12 +22,11 @@ ggplot(us_crime, aes(x=violent_crime_total))+
        x ="Total number of violent crimes", 
        caption = "Source: FBI Uniform Crime Reporting, https://www.fbi.gov/services/cjis/ucr/")+
   theme_bw()+
-  annotate("text", x = 12000 , y = 9, label = "Median", colour = "blue")+
+  annotate("text", x = 12000 , y = 9, label = "Median", colour = "blue")+ #add note
   annotate("text", x = 28000 , y = 8.175, label = "Mean", colour = "red")+
   NULL
 
   
-
 ggplot(us_crime, aes(x=violent_crime_total))+
   geom_density()+
   geom_vline(xintercept = median(us_crime$violent_crime_total), colour='blue', size = 2)+ #add a vertical line at the median value

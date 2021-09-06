@@ -10,6 +10,8 @@ output:
     toc_float: yes
   word_document:
     toc: yes
+  pdf_document:
+    toc: yes
 ---
 
 
@@ -24,8 +26,8 @@ options(digits = 3)
 
 # default figure size
 knitr::opts_chunk$set(
-  fig.width=6.75, 
-  fig.height=6.75,
+  fig.width=2.5, 
+  fig.height=2.5,
   fig.align = "center"
 )
 ```
@@ -46,7 +48,7 @@ library(ggthemes) # theme_economist, theme_fivethirtyeight, etc
 library(knitr) 
 library(kableExtra) # for nicer table formatting
 library(zoo) # to calculate 7-day moving averages
-
+library(gapminder)
 
 # Some fancy formatting, ggplot themes with opinionated defaults and an emphasis on typography
 # https://cran.r-project.org/web/packages/hrbrthemes/vignettes/why_hrbrthemes.html
@@ -82,7 +84,7 @@ Having imported the datafame, we need to inspect it to see what kind of variable
 
 ```{r inspect_dataframe}
 
-skimr::skim(bike_weather)
+skim(bike_weather)
 
 ```
 
@@ -130,13 +132,11 @@ ggplot(bike_weather, aes(x = temp)) +
 
 For boxplots, we frequently want categorical data on the x or y axis. For example, we might want a separate boxplot for each month. Try this out. Put `month` on the x axis, `temp` on the y axis, and use `geom_boxplot()`.
 
-
-
 ```{r ggplot_geom_boxplot1}
 ggplot(bike_weather, aes(x = month, y = temp)) +
-  geom_boxplot()
+  geom_boxplot()+
+  theme_bw()
 ```
-
 
 ## Adding colour
 
@@ -199,8 +199,13 @@ ggplot(movies, aes(x = gross, y = title)) +
   geom_col()
 ```
 
-
+- choose the top 20 movies
 Now these is not very useful graphs, as we have close to 3000 movies. So let us simply choose the top 20 movies using `dplyr::slice_max()` and then suing the pipe operator`%>%` , feed it into a ggplot.
+
+```{r}
+movies %>% 
+  slice_max(order_by = gross, n=20)
+```
 
 ```{r}
 movies %>% 
@@ -231,7 +236,7 @@ movies %>%
 Whenever we are making bar plots, we need to think about the correct order of the bars. By default, ggplot uses alphabetic ordering, but it is usually best to order by the magnitude of the values, i.e., sort the bars by length.
 
 We can do this with the `fct_reorder()` function, which takes two arguments: The categorical variable we want to re-order, and the values by which we want to order. Here, the categorical variable is the column `title` and the values are in the column `gross`. We can apply the `fct_reorder()` function right inside the `aes()` statement.
-
+fct_reorder(x,y):reorder x by y
 
 ```{r geom-col-sorted}
 movies %>% 
@@ -248,9 +253,59 @@ movies %>%
   NULL
 ```
 
+- Colour the bars by `genre`
+```{r}
+movies %>% 
+  slice_max(order_by = gross, n=20) %>% 
+  ggplot(aes(x = gross, y = fct_reorder(title, gross),fill= genre)) +
+  geom_col() +
+  theme_bw()+
+  labs(
+    title = "",
+    subtitle = "",
+    x = "Gross earnings (US$)",
+    y = "Movie name"
+  )+
+  NULL
+```
+
 - Can you make the bars blue?
+Inside aes, fill the variables; in geom_col, fill bars
+```{r}
+movies %>% 
+  slice_max(order_by = gross, n=20) %>% 
+  ggplot(aes(x = gross, y = fct_reorder(title, gross))) +
+  geom_col(fill='blue') +
+  theme_bw()+
+  labs(
+    title = "",
+    subtitle = "",
+    x = "Gross earnings (US$)",
+    y = "Movie name"
+  )+
+  NULL
+```
+
 - Can you colour the bars by `gross` or by `title`?
+no
+
 - Can you create a graph with the top/bottom 20 movies with respect to `return_on_budget`? Which were the greatest financial hits and the worst financial flops at the box office?
+
+```{r}
+movies %>% 
+  slice_max(order_by = return_on_budget, n=20) %>% 
+  ggplot(aes(x = return_on_budget, y =fct_reorder(title,return_on_budget))) +
+  geom_col()
+  theme_bw()+
+  labs(
+    title = "",
+    subtitle = "",
+    x = "Return on budget",
+    y = "Movie name"
+  )+
+  NULL
+```
+
 
 ## Reordering based on frequency
 
@@ -291,11 +346,11 @@ Another common problem we encounter is that we want to order a factor based on s
 gapminder %>%
   filter(continent == "Europe") %>%
   mutate(
-    country = fct_reorder(country, lifeExp, median)
+    country = fct_reorder(country, lifeExp, median) # reorder country by median(lifeExp)
   ) %>%
   ggplot(aes(year, country, fill = lifeExp)) + 
-  geom_tile() +
-  scale_fill_viridis_c(option = "C")
+  geom_tile() + # It's the same if we use geom_col()here
+  scale_fill_viridis_c(option = "A") #option here represents different fill color
 ```
 
 Now, instead of plotting this data as coloured tiles, plot it as lines, using facets to make separate panels for each country.
@@ -305,8 +360,8 @@ gapminder %>%
   filter(continent == "Europe") %>%
   mutate(country = fct_reorder(country, lifeExp, median)) %>%
   ggplot(aes(year, lifeExp)) + 
-  geom_line() +
-  facet_wrap(vars(country))
+  facet_wrap(vars(country)) +
+  geom_line() + NULL
 ```
 
 

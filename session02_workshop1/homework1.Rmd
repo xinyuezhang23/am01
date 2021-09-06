@@ -1,6 +1,6 @@
 ---
-title: "Session 2: Homework 1"
-author: "Your name goes here"
+title: 'Session 2: Homework 1'
+author: "Wei Guo"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -10,6 +10,8 @@ output:
     toc: yes
     toc_float: yes
     code_folding: show
+  pdf_document:
+    toc: yes
 ---
 
 
@@ -24,7 +26,7 @@ options(digits = 3)
 # default figure size
 knitr::opts_chunk$set(
   fig.width=6.75, 
-  fig.height=6.75,
+  fig.height=3.5,
   fig.align = "center"
 )
 ```
@@ -52,9 +54,9 @@ Back in 2014, [fivethiryeight.com](https://fivethirtyeight.com/features/dear-mon
 
 
 ```{r, load_alcohol_data}
+# Download data
 library(fivethirtyeight)
 data(drinks)
-
 
 # or download directly
 # alcohol_direct <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/alcohol-consumption/drinks.csv")
@@ -65,38 +67,76 @@ data(drinks)
 What are the variable types? Any missing values we should worry about? 
 
 ```{r glimpse_skim_data}
-# YOUR CODE GOES HERE
+# Skimming the data set to identify missing data and characteristics
+glimpse(drinks)
+skim(drinks)
 
 
 ```
 
+The data set contains 193 rows and 5 columns. 'country' column has a character data type. 'beer_servings', 'spirit_servings' and 'wine_servings' have an integer data type, while 'total_litres_of_pure_alcohol' has a double data type. None of the columns have any missing values. The data is available for 193 unique countries.
 
 Make a plot that shows the top 25 beer consuming countries
 
 ```{r beer_plot}
-# YOUR CODE GOES HERE
-
-
+#Matching beer servings drunk per person to each country in descending order and show top 25
+drinks %>% 
+  slice_max(order_by = beer_servings, n=25) %>% 
+  ggplot(
+    aes(x=beer_servings,y=fct_reorder(country,beer_servings))) + 
+  geom_col(fill='blue') +
+  #label graph
+  labs(
+    title = "Top 25 beer-consuming countries",
+    subtitle = "Namibia has the highest beer consumption. \nMost of the top 25 countries belong to Europe.",
+    x = "Beer servings drunk per person in 2010",
+    y = "Country") +
+  theme_bw()
 ```
 
 Make a plot that shows the top 25 wine consuming countries
 
 ```{r wine_plot}
 
-# YOUR CODE GOES HERE
-
+#Matching wine servings drunk per person to each country in descending order and show top 25
+drinks %>% 
+  slice_max(order_by = wine_servings, n=25) %>% 
+  ggplot(
+    aes(x=wine_servings,y=fct_reorder(country,wine_servings))) + 
+  geom_col(fill='blue') +
+  #Label graph
+  labs(
+    title = "Top 25 wine-consuming countries",
+    subtitle = "France has the highest wine consumption \nMost of the top 25 countries belong to Europe.",
+    x = "Wine servings drunk per person in 2010",
+    y = "Country") +
+  theme_bw()
 
 ```
 
 Finally, make a plot that shows the top 25 spirit consuming countries
 ```{r spirit_plot}
-# YOUR CODE GOES HERE
+#Matching spirit servings drunk per person to each country in descending order and show top 25
+drinks %>% 
+  slice_max(order_by = spirit_servings, n=25) %>% 
+  ggplot(
+    aes(x=spirit_servings,y=fct_reorder(country,spirit_servings))) + 
+  geom_col(fill='blue') +
+  #Label graph
+  labs(
+    title = "Top 25 spirit-consuming countries",
+    subtitle = "Grenada has the highest spirit consumption. \nMost of the top 25 countries belong to Europe and Caribbean region.",
+    x = "Spirit servings drunk per person in 2010",
+    y = "Country") +
+  theme_bw()
 
 ```
 
 What can you infer from these plots? Don't just explain what's in the graph, but speculate or tell a short story (1-2 paragraphs max).
 
 > TYPE YOUR ANSWER AFTER (AND OUTSIDE!) THIS BLOCKQUOTE.
+
+The data shows that most of the top 25 countries consuming all three types of alcoholic drinks belong to Europe, inferring that alcohol consumption is very popular in most European countries. Interestingly, spirits are very popular in the Caribbean region while beer and wine are not. In addition, the data displays that some Asian countries such as Kazakhstan and Japan are fond of spirits, while there is almost no Asian country in the top 25 for beer or wine consumption. For all three alcoholic drinks, the increase in consumption in the top 25 is gradual.
 
 # Analysis of movies- IMDB dataset
 
@@ -107,7 +147,7 @@ We will look at a subset sample of movies, taken from the [Kaggle IMDB 5000 movi
 
 movies <- read_csv(here::here("data", "movies.csv"))
 glimpse(movies)
-
+skim(movies)
 ```
 
 Besides the obvious variables of `title`, `genre`, `director`, `year`, and `duration`, the rest of the variables are as follows:
@@ -122,30 +162,90 @@ Besides the obvious variables of `title`, `genre`, `director`, `year`, and `dura
 ## Use your data import, inspection, and cleaning skills to answer the following:
 
 - Are there any missing values (NAs)? Are all entries distinct or are there duplicate entries?
+
+
 - Produce a table with the count of movies by genre, ranked in descending order
+```{r, genre_desc}
+movies%>%
+  group_by(movies$genre) %>%
+  count(sort=TRUE) 
+```
+
+
+
+
+
 - Produce a table with the average gross earning and budget (`gross` and `budget`) by genre. Calculate a variable `return_on_budget` which shows how many $ did a movie make at the box office for each $ of its budget. Ranked genres by this `return_on_budget` in descending order
+
+```{r return_budget}
+movies %>% 
+  group_by(genre) %>% 
+  summarise(mean_gross=mean(gross),mean_budget=mean(budget),return_on_budget=(gross-budget)/budget) %>%
+  arrange(desc(return_on_budget))
+
+# movies %>%
+#   mutate(return_on_budget=(gross-budget)/budget) %>%
+#   arrange(desc(return_on_budget)) %>%
+#   select(genre,title,return_on_budget)
+# 
+# # final_combined<-left_join(a_task,b_task,by='genre')
+# # final_combined
+
+
+```
+
+
 - Produce a table that shows the top 15 directors who have created the highest gross revenue in the box office. Don't just show the total gross amount, but also the mean, median, and standard deviation per director.
+
+```{r 15_directors}
+movies %>%
+  group_by(director) %>%
+  summarise_each(funs(max, mean,median,sd),gross) %>%
+  arrange(desc(max)) %>%
+  head(15)
+```
+
 - Finally, ratings. Produce a table that describes how ratings are distributed by genre. We don't want just the mean, but also, min, max, median, SD and some kind of a histogram or density graph that visually shows how ratings are distributed. 
+```{r ratings_distribution}
+movies %>% 
+  group_by(genre) %>% 
+  summarise(mean_rating=mean(rating),min_rating=min(rating),max_rating=max(rating),median_rating=median(rating),SD_rating=sd(rating))
+
+ggplot(movies,aes(x=rating))+
+  geom_density()+
+  facet_wrap(~genre,scale='free',nrow=5)
+```
 
 ## Use `ggplot` to answer the following
 
   - Examine the relationship between `gross` and `cast_facebook_likes`. Produce a scatterplot and write one sentence discussing whether the number of facebook likes that the cast has received is likely to be a good predictor of how much money a movie will make at the box office. What variable are you going to map to the Y- and X- axes?
   
   
-```{r, gross_on_fblikes}
-
+```{r gross_on_fblikes}
+ggplot(movies,aes(x=cast_facebook_likes,y=gross))+
+  geom_point()+
+  geom_smooth()+
+  scale_y_log10()+
+  scale_x_log10()
 ```
 
   - Examine the relationship between `gross` and `budget`. Produce a scatterplot and write one sentence discussing whether budget is likely to be a good predictor of how much money a movie will make at the box office.
 
-```{r, gross_on_budget}
-
+```{r gross_on_budget}
+ggplot(movies,aes(x=budget,y=gross))+
+  geom_point()+
+  geom_smooth()+
+  scale_y_log10()+
+  scale_x_log10()
 ```
   
   - Examine the relationship between `gross` and `rating`. Produce a scatterplot, faceted by `genre` and discuss whether IMDB ratings are likely to be a good predictor of how much money a movie will make at the box office. Is there anything strange in this dataset?
 
-```{r, gross_on_rating}
-
+```{r gross_on_rating}
+ggplot(movies,aes(x=rating,y=gross))+
+  geom_point()+
+  geom_smooth()+
+  scale_y_log10()
 ```
 
 
@@ -167,8 +267,23 @@ Based on this dataset, create a table and a bar plot that shows the number of co
 
 ```{r companies_per_sector}
 
-# YOUR CODE GOES HERE
+#Table of the number of companies per sector, in descending order
+nyse %>% 
+  group_by(sector)%>%
+  count(sort=TRUE)
 
+#Plotting a bar plot for the number of companies per sector
+nyse %>% 
+  mutate(sector=fct_rev(fct_infreq(sector))) %>% 
+  ggplot(aes(y=sector)) +
+  geom_bar() +
+
+#Adding titles and axes labels
+  labs(title = 'Number of companies per sector',
+       subtitle = 'Finance has the largest no. of companies while Consumer Durables has the least',
+       x = 'Count of companies',
+       y = 'Sector') +
+  theme_bw()
 
 ```
 
@@ -179,11 +294,12 @@ Next, let's choose some stocks and their ticker symbols and download some data. 
 # Notice the cache=TRUE argument inthe chunk options. Because getting data is time consuming, 
 # cache=TRUE means that once it downloads data, the chunk will not run again next time you knit your Rmd
 
-myStocks <- c("AAPL","JPM","DIS","DPZ","ANF","TSLA","XOM","SPY" ) %>%
+#Geting data for 6 different stocks and 'SPY'
+myStocks <- c("PLOW","GOOGL","ZEUS","ORCL","FUN","ROCK","SPY" ) %>%
   tq_get(get  = "stock.prices",
          from = "2011-01-01",
          to   = "2021-08-31") %>%
-  group_by(symbol) 
+  group_by(symbol)
 
 glimpse(myStocks) # examine the structure of the resulting data frame
 ```
@@ -224,16 +340,33 @@ myStocks_returns_annual <- myStocks %>%
 Create a table where you summarise monthly returns for each of the stocks and `SPY`; min, max, median, mean, SD.
 
 ```{r summarise_monthly_returns}
-
-# YOUR CODE GOES HERE
-
+#Calculating summary stats of monthly returns for each stock
+myStocks_returns_monthly %>% 
+  group_by(symbol) %>% 
+  summarise_each(
+    funs(min, max, median, mean, sd), monthly_returns
+    )
 ```
 
+It can be observed that GOOGL has the highest mean (0.0198) and median (0.01774) monthly returns out of all the stocks. The lowest mean monthly return is for ORCL (0.0109).
+
+In terms of standard deviation of monthly returns, ZEUS is the most risky stock as its standard deviation is highest, while SPY is the least risky.
 
 Plot a density plot, using `geom_density()`, for each of the stocks
 ```{r density_monthly_returns}
+#Density plot for monthly returns
+ggplot(myStocks_returns_monthly,
+       aes(x=monthly_returns)) +
+  geom_density() +
+  
+  #Faceting the plot by symbols
+  facet_wrap(~symbol) +
+  
+  #Adding title and axes labels
+  labs(title = 'Monthly Returns of Stocks',
+       x = 'Monthly returns',
+       y = 'Density')
 
-# YOUR CODE GOES HERE
 
 ```
 
@@ -241,17 +374,41 @@ What can you infer from this plot? Which stock is the riskiest? The least risky?
 
 > TYPE YOUR ANSWER AFTER (AND OUTSIDE!) THIS BLOCKQUOTE.
 
+The distribution of the monthly returns for all the mentioned stocks follow an approximately normal distribution.
+We observe that the riskiest stock is ZEUS as the distribution of its returns has fat tails and the standard deviation of returns is the highest (0.1683). On the other hand, the least risky stock is SPY as the returns are very concentrated around the mean and the standard deviation is the least (0.0381).
+
 Finally, make a plot that shows the expected monthly return (mean) of a stock on the Y axis and the risk (standard deviation) in the X-axis. Please use `ggrepel::geom_text_repel()` to label each stock
 
 ```{r risk_return_plot}
-# YOUR CODE GOES HERE
-
+myStocks_returns_monthly %>% 
+  group_by(symbol) %>% 
+  
+  #Calculating mean and std dev of monthly returns for each stock
+  summarise_each(
+    funs(mean, sd), monthly_returns
+    ) %>% 
+  
+  #Plotting expected monthly return on the Y Axis and risk on the X-axis
+  ggplot(aes(x=sd,y=mean,colour=symbol)) +
+  geom_point() + 
+  
+  #Labeling each stock
+  ggrepel::geom_text_repel(aes(label=symbol)) +
+  
+  #Adding title and axis labels
+  labs(title = 'Risk vs Returns',
+       y = 'Mean monthly returns',
+       x = 'Standard Deviation of monthly returns') + theme_bw()
 ```
 
 What can you infer from this plot? Are there any stocks which, while being riskier, do not have a higher expected return?
 
 > TYPE YOUR ANSWER AFTER (AND OUTSIDE!) THIS BLOCKQUOTE.
 
+We observe that GOOGL seems to be the best investment out of these stocks as it has the highest return and lower risk than most other stocks. 
+ZEUS seems to be a bad investment as the risk is highest but the returns are on the lower side.
+
+For a similar level of risk, GOOGL gives a much higher return than ORCL. Additionally, ROCK gives a higher return than FUN for a similar level of risk.
 
 
 # On your own: IBM HR Analytics
@@ -262,7 +419,7 @@ For this task, you will analyse a data set on Human Resoruce Analytics. The [IBM
 
 First let us load the data
 
-```{r}
+```{r data_load_IBM}
 
 hr_dataset <- read_csv(here::here("data", "datasets_1067_1925_WA_Fn-UseC_-HR-Employee-Attrition.csv"))
 glimpse(hr_dataset)
@@ -272,7 +429,7 @@ glimpse(hr_dataset)
 I am going to clean the data set, as variable names are in capital letters, some variables are not really necessary, and some variables, e.g., `education` are given as a number rather than a more useful description
 
 
-```{r}
+```{r hr_cleaned}
 
 hr_cleaned <- hr_dataset %>% 
   clean_names() %>% 
@@ -323,13 +480,198 @@ hr_cleaned <- hr_dataset %>%
 Produce a one-page summary describing this dataset. Here is a non-exhaustive list of questions:
 
 1. How often do people leave the company (`attrition`)
-1. How are `age`, `years_at_company`, `monthly_income` and `years_since_last_promotion` distributed? can you roughly guess which of these variables is closer to Normal just by looking at summary statistics? 
+```{r }
+# Wei
+Quit_employees<-hr_cleaned %>% 
+  filter(attrition=='Yes')
+Quit_employees%>% 
+  summarise_each(funs(mean,max,min,median,sd),years_at_company)
+# Quit_employees%>% 
+#   ggplot(aes(x=years_at_company))+
+#   geom_density(alpha=0) +
+#   theme(axis.text =element_text(size=15),axis.title = element_text(size=15))
+#Xinyue
+hr_cleaned %>% 
+  filter(attrition =="Yes") %>% 
+  ggplot(aes(x=years_at_company))+geom_density()
+```
+
+1. How are `age`, `years_at_company`, `monthly_income` and `years_since_last_promotion` distributed? can you roughly guess which of these variables is closer to Normal just by looking at summary statistics?
+```{r}
+skim(list(hr_cleaned$age,hr_cleaned$years_at_company,hr_cleaned$monthly_income,hr_cleaned$years_since_last_promotion))
+
+# age fits into the normal distribution
+```
+
 1. How are `job_satisfaction` and `work_life_balance` distributed? Don't just report counts, but express categories as % of total
+```{r}
+library(scales)
+satisfaction_table<-hr_cleaned %>%
+   mutate(job_satisfaction=fct_infreq(job_satisfaction),N=n()) %>%
+   group_by(job_satisfaction) %>%
+   mutate(count=n(),per=percent(count/N,0.1)) %>% 
+  select(job_satisfaction,count,per) %>% 
+  unique()
+satisfaction_table
+
+ggplot(satisfaction_table, aes(x=fct_rev(reorder(job_satisfaction,count)),y=count,fill=job_satisfaction))+
+  geom_col(width=0.3)+geom_text(aes(label=per),nudge_y = 15,size=7,colour = "black")+
+  theme(axis.text =element_text(size=15),axis.title = element_text(size=15),legend.text = element_text(size=15) ,legend.title = element_text(size=15),legend.box.background = element_rect())
+
+life_balance_table<-hr_cleaned %>%
+   mutate(N=n()) %>%
+   group_by(work_life_balance) %>%
+   mutate(count=n(),per=percent(count/N,0.1)) %>% 
+   select(work_life_balance,count,per) %>% 
+   unique()
+
+life_balance_table
+
+ggplot(life_balance_table, aes(x=fct_rev(reorder(work_life_balance,count)),y=count,fill=work_life_balance))+
+  geom_col(width=0.3)+geom_text(aes(label=per),nudge_y = 25,size=7,colour = "black")+
+  theme(axis.text =element_text(size=15),axis.title = element_text(size=15),legend.text = element_text(size=15) ,legend.title = element_text(size=15),legend.box.background = element_rect())
+
+
+
+# hr_cleaned %>% 
+#   group_by(job_satisfaction) %>%
+#   summarise(job_sat_per=100 * n() / nrow(hr_cleaned)) %>% 
+#   ggplot(aes(x= job_satisfaction,y=job_sat_per))+geom_col()+
+#   labs(y='Job patisfaction percent %')
+# 
+# hr_cleaned %>% 
+#   group_by(work_life_balance) %>%
+#   summarise(wlb_per=100 * n() / nrow(hr_cleaned)) %>% 
+#   ggplot(aes(x= work_life_balance,y=wlb_per))+geom_col()+
+#   labs(y='Work life balance percent %')
+
+# hr_cleaned %>% 
+#   group_by(job_satisfaction) %>% 
+#   summarise(n=n()) %>% 
+#   mutate(proportion = n*100/sum(n)) %>% 
+#   arrange(desc(n))
+# 
+# hr_cleaned %>% 
+#   group_by(work_life_balance) %>% 
+#   summarise(n=n()) %>% 
+#   mutate(proportion = n*100/sum(n)) %>% 
+#   arrange(desc(n))
+```
+
 1. Is there any relationship between monthly income and education? Monthly income and gender?
+```{r}
+hr_cleaned %>% 
+  group_by(education) %>%
+  summarise_each(funs(min,max,median,mean,sd),
+                 monthly_income) %>% 
+  arrange(desc(mean))
+
+# hr_cleaned %>% 
+#   group_by(education) %>% 
+#   summarise(mean_income=mean(monthly_income)) %>% 
+#   ggplot(aes(x=reorder(education,mean_income),y=mean_income,fill=education))+
+#   geom_col(width=0.4)
+
+hr_cleaned %>% 
+  ggplot(aes(x=fct_reorder(education,monthly_income),y= monthly_income,fill=education))+
+  geom_boxplot()+
+  labs(title='Monthly income and Education',
+       x='Education',
+       y='Monthly income')+theme(axis.title = element_text(size=15))
+
+# hr_cleaned %>% 
+#   ggplot(aes(x=monthly_income,fill=gender))+
+#   geom_density(alpha=0.2)+
+#   theme(axis.text =element_text(size=15),axis.title = element_text(size=15),legend.text = element_text(size=15) ,legend.title = element_text(size=15),legend.box.background = element_rect())
+
+hr_cleaned %>% 
+  group_by(gender) %>%
+  summarise_each(funs(min,max,median,mean,sd),
+                 monthly_income) %>% 
+  arrange(desc(mean))
+
+hr_cleaned %>% 
+  ggplot(aes(x=fct_reorder(gender,monthly_income),y= monthly_income,fill=gender))+
+  geom_boxplot(width=0.5)+
+  labs(title='Monthly income and Gender',
+       x='Gender',
+       y='Monthly income')+theme(axis.title = element_text(size=15))
+```
+
+
+
 1. Plot a boxplot of income vs job role. Make sure the highest-paid job roles appear first
+```{r}
+hr_cleaned %>% 
+  mutate(job_role=fct_reorder(job_role,monthly_income)) %>% 
+  ggplot(aes(x=monthly_income,y=job_role,fill=job_role))+
+  geom_boxplot()+
+  theme(axis.text =element_text(size=20),axis.title = element_text(size=20) )
+
+
+#Xinyue's
+
+#Apart from manager, the range of monthly income for various job roles becomes wider when rank is higher.
+```
+
 1. Calculate and plot a bar chart of the mean (or median?) income by education level.
+```{r}
+hr_cleaned %>% 
+  group_by(education) %>% 
+  summarise(median_income=median(monthly_income)) %>% 
+  arrange(desc(median_income))
+
+# hr_cleaned %>% 
+#   group_by(education) %>% 
+#   summarise(mean_income=mean(monthly_income)) %>% 
+#   mutate(education=fct_reorder(education,mean_income)) %>% 
+#   ggplot(aes(x=education,y=mean_income,fill=education))+
+#   geom_col(width=0.5)+geom_text(aes(label=round(mean_income)),colour='black',nudge_y = 190,size=6)+
+#   theme(axis.text =element_text(size=20),axis.title = element_text(size=20) )
+
+
+
+hr_cleaned %>% 
+  group_by(education) %>% 
+  summarise(median_income=median(monthly_income)) %>% 
+  mutate(education=fct_reorder(education,median_income)) %>% 
+  ggplot(aes(x=education,y=median_income,fill=education))+
+  geom_col(width=0.5)+geom_text(aes(label=round(median_income)),colour='black',nudge_y = 190,size=6)+
+  theme(axis.text =element_text(size=20),axis.title = element_text(size=20) )
+```
+
 1. Plot the distribution of income by education level. Use a facet_wrap and a theme from `ggthemes`
+
+```{r}
+ggplot(hr_cleaned,aes(x=monthly_income,color=education))+
+  geom_density(alpha=0)+
+  facet_wrap(~education)+
+  theme_economist()+
+  theme(legend.position = "none",axis.text =element_text(size=15),axis.title = element_text(size=15) ,strip.text=element_text(size=15),axis.title.x.bottom =   element_text(margin=margin(15,0,0,0)),axis.title.y.left = element_text(margin=margin(0,15,0,0)))
+```
+#Q7: As what have been interpreted before, people are more likely to have higher monthly wages if they have been educated for a longer period of time. Besides, all these five density plots are right-skewed, so there definitely are other factors that help to differentiate earnings between people having similar educational backgrounds. The graph also looks better when we apply the economist format.
+
 1. Plot income vs age, faceted by `job_role`
+
+```{r, fig.height=15,fig.width=10}
+ggplot(hr_cleaned,aes(x=age,y=monthly_income))+
+  geom_point()+
+  geom_smooth()+
+  facet_wrap(~job_role,ncol=2)+
+  theme(legend.position = 'none',axis.text =element_text(size=20),axis.title = element_text(size=20) ,strip.text=element_text(size=25) )
+
+
+hr_cleaned %>% 
+  ggplot(aes(x=age,y=monthly_income))+
+  geom_point()+
+  geom_smooth()+
+  facet_wrap(~ job_role)
+
+# The youngest manager is 30 years old so you need to have some experiences to be a manager.
+# Few people do sales representative job after reaching age of 50.
+# Managers and Research Directors' salary rise sharply after reaching at a certain age.
+# https://ggplot2.tidyverse.org/reference/theme.html
+```
 
 
 # Challenge 1: Replicating a chart
@@ -341,7 +683,7 @@ knitr::include_graphics(here::here("images", "vaxxes_by_state_red_blue_every_cou
 ```
 
 
-You dont have to worry about the blue-red backgound and don't worry about replicating it exactly, try and see how far you can get. You're encouraged to work together if you want to and exchange tips/tricks you figured out-- and even though the figure in the original article is from early July 2021, you can use the most recent data.
+You dont have to worry about the blue-red backgouns and don't worry about replicating it exactly, try and see how far you can get. You're encouraged to work together if you want to and exchange tips/tricks you figured out-- and even though the figure in the original article is from early July 2021, you can use the most recent data.
 
 Some hints to get you started:
 
@@ -381,8 +723,64 @@ population <- vroom(population_url) %>%
   # pad FIPS codes with leading zeros, so they are always made up of 5 characters
   mutate(fips = stringi::stri_pad_left(fips, width=5, pad = "0"))
 
+
+         
+
+
 ```
 
+```{r}
+# We choose the latest date as the day that we are going to analyze
+vaccinations_cleaned<-vaccinations %>% 
+  filter(date=="09/03/2021")
+
+# Filtering the vaccination data to focus on how many % votes Donald Trump had secured, and calculating his support rate.
+election_cleaned<-election2020_results %>% 
+  mutate(support_rate=candidatevotes/totalvotes) %>% 
+  filter(candidate=="DONALD J TRUMP") %>% 
+  group_by(fips) %>% 
+  mutate(support_rate=sum(support_rate)) %>% 
+  select(fips,county_name,support_rate) %>% 
+  unique()
+
+# Merging all three tables together into one for graphing later.
+vacc_election<-left_join(vaccinations_cleaned,election_cleaned,by="fips")%>% 
+  select(fips,county_name,series_complete_pop_pct,support_rate) 
+vacc_election_pop<-left_join(vacc_election,population,by="fips") %>% 
+  rename(pop=pop_estimate_2019,vacc_rate=series_complete_pop_pct) %>% 
+  filter(vacc_rate>=5) %>% 
+  mutate(vacc_rate=vacc_rate/100)
+
+# Carrying out a linear regression analysis and writing down the formula
+fit <- lm(vacc_rate ~ support_rate, data=vacc_election_pop)
+summary(fit)
+
+```
+
+```{r,fig.height=12,fig.width=8}
+ggplot(vacc_election_pop,aes(x=support_rate,y=vacc_rate,size=pop))+
+  geom_point(alpha=0.6,colour='black')+
+  theme(legend.position = "none",plot.title=element_text(hjust=0.5,size=25,face="bold"),plot.subtitle = element_text(hjust = 0.5,size=20),axis.text =element_text(size=15),axis.title = element_text(size=15))+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1),breaks=seq(0,1,by=0.05),limit=c(0,1.05))+
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1),breaks=seq(0,1,by=0.05),limit=c(0,1))+
+  labs(title = "COVID-19 VACCINATION LEVELS OUT OF TOTAL POPULATION BY COUNTY",
+         subtitle = "(most states based on FULLY vaccinated only;CA,GA,IA,MI & TX based on total doses administered) \n Data via Centers for Disease Control, COVID Act Now, state health depts \n Graph by Study Group 4",
+         x = "2020 Trump Vote %", 
+         y = "% of Total Population Vaccinated")+annotate("text",x=0.5,y=1.05,label="EVERY U.S. COUNTY",size=15,color='black',face='bold')+geom_smooth(method='lm',formula=y~x,se=FALSE,alpha=0.1,linetype="dashed")+
+  annotate("text",x=0.1,y=0.035,label="y=-0.4173x+0.6601",color='red',face='bold',size=6)+
+  annotate("text",x=0.1,y=0.01,label="R squared=0.272",color='red',face='bold',size=6)+
+  annotate("text",x=0.3,y=0.02,label="09/03/2021",color='red',face='bold',size=6)+
+  geom_hline(yintercept=0.495, linetype="dashed", color = "black")+
+  geom_hline(yintercept=0.539, linetype="dashed", color = "black")+
+  geom_hline(yintercept=0.85, linetype="dashed", color = "black")+
+  annotate("text",x=0.01,y=0.501,label="Actual:49.5%",color='blue',face='bold',size=6)+
+  annotate("text",x=0.01,y=0.545,label="Target:53.9%",color='blue',face='bold',size=6)+
+  annotate("text",x=0.02,y=0.856,label="Herd Immunity threshold (?)",color='blue',face='bold',size=6)+
+  annotate("rect", xmin=-Inf, xmax=0.55, ymin=-Inf, ymax=Inf, alpha=0.2, fill="blue")+
+  annotate("rect", xmin=0.45, xmax=Inf, ymin=-Inf, ymax=Inf, alpha=0.2, fill="red")
+```
+
+Although we get a different regression result, the conclusions drawn from it are the same as the original article. We believe this graph does the right job.
 
 # Challenge 2: Opinion polls for the 2021 German elections
 
@@ -427,11 +825,96 @@ german_election_polls <- polls[[1]] %>% # the first table on the page contains t
          month = month(end_date),
          week = isoweek(end_date)
          )
+
+
+
+```
+
+```{r}
+nrow(german_election_polls)
+
+#Removing duplicate values
+german_election_polls <- german_election_polls[!duplicated(german_election_polls), ]
+
+nrow(german_election_polls)
 ```
 
 
 
+```{r}
+#Calculating rolling average for different political parties
 
+german_election_polls_avg <- german_election_polls %>%
+  mutate(
+    union_avg = rollmean(union, 14, align="left", fill = NA),
+    spd_avg = rollmean(spd, 14, align="left", fill = NA),
+    afd_avg = rollmean(af_d, 14, align="left", fill = NA),
+    fdp_avg = rollmean(fdp, 14, align="left", fill = NA),
+    linke_avg = rollmean(linke, 14, align="left", fill = NA),
+    grune_avg = rollmean(grune, 14, align="left", fill = NA)
+    )
+```
+
+
+
+```{r}
+#Plotting the graph
+
+#Setting colors for different political parties
+color_parties<-c("SPD"="red3","CDU/CSU"="black","Grüne"="green3","FDP"="orange","AfD"="blue3","Linke"="purple3")
+
+german_election_polls_avg %>%
+  ggplot +
+
+  #Union
+  geom_point(aes(x=end_date,y=union,colour="CDU/CSU"), alpha=0.5)+
+  geom_line(aes(x=end_date,y=union_avg,colour="CDU/CSU"),
+            se=FALSE,size=1.1, alpha=0.6)+
+  #spd
+  geom_point(aes(x=end_date,y=spd,colour="SPD"), alpha=0.5)+
+  geom_line(aes(x=end_date,y=spd_avg,colour="SPD"),
+            se=FALSE,size=1.1, alpha=0.6)+
+  #af_d
+  geom_point(aes(x=end_date,y=af_d,colour="AfD"), alpha=0.5)+
+  geom_line(aes(x=end_date,y=afd_avg,colour="AfD"),
+            se=FALSE,size=1.1, alpha=0.6)+
+  #fdp
+  geom_point(aes(x=end_date,y=fdp,colour="FDP"), alpha=0.5)+
+  geom_line(aes(x=end_date,y=fdp_avg,colour="FDP"),
+            se=FALSE,size=1.1, alpha=0.6)+
+  #linke
+  geom_point(aes(x=end_date,y=linke,colour="Linke"), alpha=0.5)+
+  geom_line(aes(x=end_date,y=linke_avg,colour="Linke"),
+            se=FALSE,size=1.1, alpha=0.6)+
+  #grune
+  geom_point(aes(x=end_date,y=grune,colour="Grüne"), alpha=0.5)+
+  geom_line(aes(x=end_date,y=grune_avg,colour="Grüne"),
+            se=FALSE,size=1.1, alpha=0.6)+
+
+  scale_colour_manual(name="09/03/2021",values=color_parties)+
+
+  #Setting x and y axes labels to be null
+  labs(x="", y="") +
+
+  #Date labels for x-axis
+  scale_x_date(date_minor_breaks = "1 months",
+               date_labels = "%b %Y") +
+
+  #Percentage labels for y-axis
+  scale_y_continuous(breaks = c(5, 15, 25, 35, 45),
+                     labels = function(x) paste0(x, "%")) +
+
+  #Setting black and white theme, and removing grid lines
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.title = element_text(size=10,face="bold"),legend.box.background = element_rect(),legend.position = c(.99, .99),
+  legend.justification = c("right", "top")) +
+
+  #Plotting horizontal lines
+  geom_hline(aes(yintercept = 5), linetype="dashed", alpha=0.2) +
+  geom_hline(aes(yintercept = 15), linetype="dashed", alpha=0.2) +
+  geom_hline(aes(yintercept = 25), linetype="dashed", alpha=0.2) +
+  geom_hline(aes(yintercept = 35), linetype="dashed", alpha=0.2)
+```
 # Deliverables
 
 There is a lot of explanatory text, comments, etc. You do not need these, so delete them and produce a stand-alone document that you could share with someone. Knit the edited and completed R Markdown file as an HTML document (use the "Knit" button at the top of the script editor window) and upload it to Canvas.
