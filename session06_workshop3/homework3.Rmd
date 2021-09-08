@@ -326,7 +326,7 @@ knitr::include_graphics(here::here("images", "cdc_data.png"), error = FALSE)
 ```
 
 
-There are well over 28 million entries of individual, de-identified patient data, and the CSV  is more than 3Gb. Since this is a large file, we have made it into an SQLlite database. Given the data we have, I would like you to produce two graphs that show death % rate:
+There are well over 28 million entries of individual, and we will work with SQLlite database, rather than a CSV file. I would like you to produce two graphs that show death % rate:
 
 1. by age group, sex, and whether the patient had co-morbidities or not
 1. by age group, sex, and whether the patient was admited to Intensive Care Unit (ICU) or not.
