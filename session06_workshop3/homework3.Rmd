@@ -316,6 +316,29 @@ knitr::include_graphics(here::here("images", "brexit.png"), error = FALSE)
 ```
 
 
+# Challenge 1: CDC COVID-19 Public Use Data
+
+The [CDC Covid-19 Case Surveillance Data](https://data.cdc.gov/Case-Surveillance/COVID-19-Case-Surveillance-Public-Use-Data/vbim-akqf) is a case surveillance public use dataset with 12 elements for all COVID-19 cases shared with CDC and includes demographics, any exposure history, disease severity indicators and outcomes, presence of any underlying medical conditions and risk behaviors. You can see the variables from 
+
+
+```{r covid_data, echo=FALSE, out.width="100%"}
+knitr::include_graphics(here::here("images", "cdc_data.png"), error = FALSE)
+```
+
+
+There are well over 28 million entries of individual, de-identified patient data, and the CSV  is more than 3Gb. Since this is a large file, we have made it into an SQLlite database. Given the data we have, I would like you to produce two graphs that show death % rate:
+
+1. by age group, sex, and whether the patient had co-morbidities or not
+1. by age group, sex, and whether the patient was admited to Intensive Care Unit (ICU) or not.
+
+
+```{r covid_challenge, echo=FALSE, out.width="100%"}
+knitr::include_graphics(here::here("images", "covid_death_rate_comorbidities.png"), error = FALSE)
+knitr::include_graphics(here::here("images", "covid_death_rate_icu.png"), error = FALSE)
+```
+
+To do this, you will have to think what dplyr verbs to use to select, filter, group_by, etc. You will then use the example shown in https://mam2022.netlify.app/reference/reference_sql/#establish-a-connection-with-the-sqlite-database-1 to use dplyr, dbplyr, and ggplot to produce these graphs.
+
 
 # Challenge 2:GDP components over time and among countries
 
