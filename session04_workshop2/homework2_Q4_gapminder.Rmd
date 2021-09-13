@@ -45,7 +45,7 @@ library(vroom)
 
 
 
-# Climate change and temperature anomalies 
+# 1.Climate change and temperature anomalies 
 
 
 If we wanted to study climate change, we can find data on the *Combined Land-Surface Air and Sea-Surface Water Temperature Anomalies* in the Northern Hemisphere at [NASA's Goddard Institute for Space Studies](https://data.giss.nasa.gov/gistemp). The [tabular data of temperature anomalies can be found here](https://data.giss.nasa.gov/gistemp/tabledata_v4/NH.Ts+dSST.txt)
@@ -222,7 +222,7 @@ formula_ci
 
 > What is the data showing us? Please type your answer after (and outside!) this blockquote. You have to explain what you have done, and the interpretation of the result. One paragraph max, please!
 
-# General Social Survey (GSS)
+# 2.General Social Survey (GSS)
 
 The [General Social Survey (GSS)](http://www.gss.norc.org/) gathers data on American society in order to monitor and explain trends in attitudes, behaviours, and attributes. Many trends have been tracked for decades, so one can see the evolution of attitudes, etc in American Society.
 
@@ -276,7 +276,7 @@ Can we estimate the *population* parameter on time spent on email weekly?
 1. Would you expect a 99% confidence interval to be wider or narrower than the interval you calculated above? Explain your reasoning.
 
 
-# Biden's Approval Margins
+# 3.Biden's Approval Margins
 
 As we saw in class, fivethirtyeight.com has detailed data on [all polls that track the president's approval ](https://projects.fivethirtyeight.com/biden-approval-ratings)
 
@@ -304,7 +304,7 @@ knitr::include_graphics(here::here("images", "biden_approval_margin.png"), error
 Compare the confidence intervals for `week 3` and `week 25`. Can you explain what's going on? One paragraph would be enough.
 
 
-# Gapminder revisited
+# 4.Gapminder revisited
 
 Recall the `gapminder` data frame from the gapminder package. That data frame contains just six columns from the larger [data in Gapminder World](https://www.gapminder.org/data/). In this part, you will join a few dataframes with more data than the 'gapminder' package. Specifically, you will look at data on 
 
@@ -341,12 +341,169 @@ countries <-  wbstats::wb_cachelist$countries
 ```
 
 You have to join the 3 dataframes (life_expectancy, worldbank_data, and HIV) into one. You may need to tidy your data first and then perform [join operations](http://r4ds.had.co.nz/relational-data.html). Think about what type makes the most sense **and explain why you chose it**.
+```{r tidy data}
+#tidy HIV
+hiv_tidy<-
+  hiv %>% 
+  pivot_longer(cols=2:34, 
+               names_to="year", 
+               values_to = "hiv_percent")
+#view(hiv_tidy)
+
+#tidy life expectancy
+life_exp_tidy<-
+  # we only need date before 2021
+  select( life_expectancy,c(1:223)) %>% 
+  pivot_longer(cols=2:223, 
+               names_to="year", 
+               values_to = "life_exp")
+#view(life_exp_tidy)
+
+#join region to worldbank data by iso3c
+worldbank_data<- left_join(worldbank_data,select(countries, c('iso3c','region')))
+# filter to see if there is missing values in region
+worldbank_data %>% 
+  filter(is.na(region))
+
+```
+
+To join the data frames, we use world bank data as the main one and left join others. Since each data frames contains some NA values in several years. If we use inner join, quite a lot rows will be missed.
+```{r join_3_dataframes}
+# join life_expectancy, worldbank_data, and HIV
+#worldbank_data contains year from 1960 to 2016
+#rename date in worldbank data as year
+worldbank_data <- rename(worldbank_data,year = date )
+worldbank_data$year <- as.character(worldbank_data$year)
+life_wb<- 
+  left_join(worldbank_data,life_exp_tidy,
+             # by=c('country'='country','year'='year'),
+            copy= TRUE)
+
+
+life_wb_hiv <- 
+  left_join (life_wb,hiv_tidy,
+             # by = c('country'='country','year'='year'),
+             copy= TRUE)
+  
+
+```
 
 1. What is the relationship between HIV prevalence and life expectancy? Generate a scatterplot with a smoothing line to report your results. You may find faceting useful
+```{r}
+life_wb_hiv %>% 
+  #filter NA
+  ggplot(aes(x=hiv_percent , y= life_exp))+
+  geom_point(alpha=0.2)+
+  #scale_x_log10()+
+  geom_smooth( )+
+  theme_bw()+
+  ylim(40,100)+
+  xlim(0,30)+
+  facet_wrap(~ region  )+
+  labs( x='HIV prevalence ',
+        y='Life expectancy')+
+  NULL
+
+```
+The higher HIV prevalence, the lower life expectancy. The have a negative correlation.
+
 1. What is the relationship between fertility rate and GDP per capita? Generate a scatterplot with a smoothing line to report your results. You may find facetting by region useful
+```{r}
+#Female fertility: SP.DYN.TFRT.IN
+#GDP per capita: NY.GDP.PCAP.KD
+life_wb_hiv %>% 
+  ggplot(aes(x=SP.DYN.TFRT.IN , y= NY.GDP.PCAP.KD))+
+  geom_point(alpha=0.2)+
+  scale_y_log10()+
+  geom_smooth(method= 'lm')+
+  facet_wrap(~ region  )+
+  labs(
+    x='Female fertility',
+    y='GDP per capita'
+  )
+  NULL
+
+
+```
+The lower and GDP per capita,the higher fertility rate. They have a negative correlation.
+
 1. Which regions have the most observations with missing HIV data? Generate a bar chart (`geom_col()`), in descending order.
+```{r}
+#join the region to hiv_tidy using countrycode
+hiv_tidy$region   <- countrycode(hiv_tidy$country, origin = "country.name", destination = "region")
+hiv_tidy%>% 
+  filter(is.na(region))
+
+#count the missing values
+hiv_na<-hiv_tidy %>% 
+  filter(is.na(hiv_percent)) %>% 
+  group_by(region) %>% 
+  count(sort= TRUE)  
+#plot
+hiv_na %>% 
+  filter(!is.na(region)) %>% 
+  ggplot(aes(y=fct_reorder(region,n),x= n))+
+  geom_col()+
+  labs(
+    x='Observations with missing HIV data',
+    y='Region'
+  )+
+  theme_bw()+
+  NULL
+```
+Sub-Saharan Africa has the most observations with missing HIV data.
+
 1. How has mortality rate for under 5 changed by region? In each region, find the top 5 countries that have seen the greatest improvement, as well as those 5 countries where mortality rates have had the least improvement or even deterioration.
+```{r}
+# filter na value in mortality rate
+mortality<- worldbank_data %>% 
+  filter(!is.na(SH.DYN.MORT)) %>% 
+  select(country,year,region,SH.DYN.MORT)
+#find the start/end year when the country has a mortality rate data
+mortality_year<-
+  mortality%>% 
+  group_by(country) %>% 
+  summarise(min_year=min(year),max_year=max(year),region) %>% 
+  distinct
+
+# calculate the improvement of each country
+mortality_improvement<-
+  # find the mortality rate of start year.
+  left_join(mortality_year,
+            select(mortality,'country','year','SH.DYN.MORT'), 
+            by = c('country'='country','min_year'='year')) %>% 
+  rename(mort_start=SH.DYN.MORT) %>% 
+  # find the mortality rate of end year.
+  left_join(select(mortality,'country','year','SH.DYN.MORT'), 
+            by = c('country'='country','max_year'='year')) %>% 
+  rename(mort_end=SH.DYN.MORT) %>% 
+  #calculate the improvement. We expect mortality rate becomes lower than before
+  mutate(improvement_pct= (mort_start-mort_end)*100/mort_start) %>%
+# we only need country,region and improvement data
+  select('country','region','mort_start','mort_end','improvement_pct') %>% 
+  arrange(region,desc(improvement_pct))
+view(mortality_improvement)
+```
+In mortality_improvement data frame, we can see mortality improvment over the past years is order by region and descending values. 
+Take East Asia & Pacific region as an example. We can find that Korea,Rep ,Singapore ,Japan ,Thiland ,China have seen the greatest improvement. And Micronesia, Fed. Sts. ,Korea, Dem. People's Rep.,Palau, Nauru,Tuvalu have seen the least improvement. There is no deterioration in all regions.
+
+
 1. Is there a relationship between primary school enrollment and fertility rate?
+```{r relationship }
+life_wb_hiv %>% 
+  ggplot(aes(x= SP.DYN.TFRT.IN, y= SE.PRM.NENR))+
+  geom_point(alpha=0.2)+
+  geom_smooth(method='lm')+
+  labs(
+    x= 'Fertility rate in total bith per woman',
+    y= 'Primary school enrollment (%)'  )+
+  theme_bw()+
+  facet_wrap(~ region)+
+  NULL
+
+
+```
+Yes, a negative correlation. The higher fertility rate, the lower primary school enrollment rate.
 
 
 # Challenge 1: Excess rentals in TfL bike sharing
@@ -387,6 +544,43 @@ However, the challenge I want you to work on is to reproduce the following two g
 
 ```{r tfl_absolute_monthly_change, echo=FALSE, out.width="100%"}
 knitr::include_graphics(here::here("images", "tfl_monthly.png"), error = FALSE)
+```
+
+```{r, rentals_distribution}
+fav_stats(bike$bikes_hired)
+
+bike %>% 
+  ggplot(aes(x=bikes_hired)) +
+  geom_boxplot()
+
+```
+
+```{r}
+monthly_avg <- bike %>% 
+  filter(year %in% c(2016,2017,2018,2019)) %>% 
+  group_by(month) %>% 
+  summarise(
+    mean_bikes = mean(bikes_hired)
+  )
+
+monthly_avg
+
+```
+
+```{r}
+bikes_with_avg <- left_join(bike, monthly_avg, on='month')
+
+bikes_with_avg <- bikes_with_avg %>% 
+  filter(year %in% c(2016,2017,2018,2019,2020, 2021)) %>% 
+  mutate(excess_rentals = bikes_hired - mean_bikes)
+
+```
+```{r}
+bikes_with_avg %>% 
+  ggplot(aes(x = factor(month), y=mean_bikes))+
+  geom_line(aes(group=1),color='blue')+
+  facet_wrap( ~ year)
+  
 ```
 
 The second one looks at percentage changes from the expected level of weekly rentals. The two grey shaded rectangles correspond to Q2 (weeks 14-26) and Q4 (weeks 40-52).

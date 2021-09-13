@@ -1,0 +1,158 @@
+---
+title: "Session 4: Homework 2 just the polls question"
+author: "Study group and members' names go here"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    highlight: zenburn
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+    code_folding: show
+---
+
+
+```{r, setup, include=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+options(digits = 3)
+
+# default figure size
+knitr::opts_chunk$set(
+  fig.width=6.75, 
+  fig.height=6.75,
+  fig.align = "center"
+)
+```
+
+
+```{r load-libraries, include=FALSE}
+library(tidyverse)  # Load ggplot2, dplyr, and all the other tidyverse packages
+library(mosaic)
+library(ggthemes)
+library(lubridate)
+library(here)
+library(skimr)
+library(janitor)
+library(httr)
+library(readxl)
+library(vroom)
+```
+
+
+
+
+# Biden's Approval Margins
+
+As we saw in class, fivethirtyeight.com has detailed data on [all polls that track the president's approval ](https://projects.fivethirtyeight.com/biden-approval-ratings)
+
+```{r, cache=TRUE}
+# Import approval polls data directly off fivethirtyeight website
+approval_polllist <- read_csv('https://projects.fivethirtyeight.com/biden-approval-data/approval_polllist.csv') 
+
+glimpse(approval_polllist)
+
+# Use `lubridate` to fix dates, as they are given as characters.
+
+#load lubridate
+library(lubridate)
+
+#mutate date collumns to contain dates not characters
+approval_polllist<- approval_polllist %>% 
+  #use mdy() as dates are in US style date format
+  mutate(modeldate = mdy(modeldate),
+         startdate = mdy(startdate),
+         enddate = mdy(enddate)
+  )
+
+```
+
+## Create a plot
+
+What I would like you to do is to calculate the average net approval rate (approve- disapprove) for each week since he got into office. I want you plot the net approval, along with its 95% confidence interval. There are various dates given for each poll, please use `enddate`, i.e., the date the poll ended.
+
+```{r, approval rate plot, echo=FALSE}
+
+approval_polllist %>% 
+  #turn dates into weeks and calculate net approval rate in new column
+  mutate(week = week(enddate),
+         net_approval_rate = approve - disapprove) %>% 
+  
+  #keep only "All polls" results
+  filter(subgroup == "All polls") %>% 
+  
+  #remove unwanted entries and columns
+  unique() %>% 
+  select(week, pollster, samplesize,net_approval_rate) %>% 
+  arrange(week) %>% 
+  
+  #calculate average net approval rate for each week
+  group_by(week) %>% 
+  summarise(mean_net_approval = mean(net_approval_rate),
+            SD= sd(net_approval_rate),
+            n=n(),
+            SE=SD/sqrt(n),
+  #since we don't know the population's σ we will use the t-distribution derived CIs
+            t_critical=qt(0.975, n-1),
+            upper_CI = mean_net_approval +t_critical*SE,
+            lower_CI = mean_net_approval -t_critical*SE) %>% 
+
+  #plot diagram using ggplot
+  ggplot+
+  geom_point(aes(x=week, y=mean_net_approval), color="red", alpha=0.4)+
+  geom_line(aes(x=week, y=mean_net_approval),color="red", alpha=0.4)+
+  
+  #add regression line
+  geom_smooth(aes(x=week, y=mean_net_approval),color="blue",se = FALSE)+
+ 
+  #plot CIs
+  geom_ribbon(aes(x= week,
+                  ymin=mean_net_approval-t_critical*SE,
+                  ymax=mean_net_approval+t_critical*SE), alpha=0.2)+
+  
+  #add reference line on y=0
+   geom_hline(yintercept=0, lwd = 1.2,color = "orange")+
+  
+  #add legends
+  labs(title="Estimating Approval Margin (approve - disapprove) for Joe Biden",
+       subtitle = "Weekly Average of All Polls",
+       x= "Week of the Year",
+       y= "Average Net Approval")+
+  
+  #format y axis scale
+  scale_y_continuous(
+                    breaks = seq(-5, 30, by=5) ,
+                    labels = function(x) paste0(x))+
+  
+   theme_bw()
+    
+  
+
+  
+#   summarise(total_sample = sum(samplesize),
+#             week_total=sum(samplesize*net_approval_rate/100),
+#             total_net_approval = week_total/total_sample ) %>% 
+#   #calculate SE and CI
+#   mutate(SE=sqrt(total_net_approval*(1-total_net_approval)/total_sample),
+#          upper_CI = total_net_approval +1.96*SE,
+#          lower_CI = total_net_approval -1.96*SE)
+
+
+```
+
+Also, please add an orange line at zero. Your plot should look like this:
+
+```{r trump_margins, echo=FALSE, out.width="100%"}
+knitr::include_graphics(here::here("images", "biden_approval_margin.png"), error = FALSE)
+```
+
+## Compare Confidence Intervals
+
+Compare the confidence intervals for `week 3` and `week 25`. Can you explain what's going on? One paragraph would be enough.
+
+The difference is in the sample size available. While in week 3 we only had 4 polls to calculate the average from, in week 25 we had a record of 29 different polls to calculate the average. The bigger our sample size "n" is, (in this case the number of polls), the smaller the CIs are, given that they are calculated by subtracting and adding t_critical * s/**qqrt(n)** to the average value.
+
